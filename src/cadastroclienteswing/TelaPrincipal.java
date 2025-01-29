@@ -122,6 +122,11 @@ public class TelaPrincipal extends javax.swing.JFrame {
         });
 
         btnAtualizar.setText("Atualizar");
+        btnAtualizar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAtualizarActionPerformed(evt);
+            }
+        });
 
         jMenu1.setText("Opções");
         jMenu1.addActionListener(new java.awt.event.ActionListener() {
@@ -274,7 +279,22 @@ public class TelaPrincipal extends javax.swing.JFrame {
             return;
         } 
         
-        Cliente cliente = new Cliente(nome, cpf, telefone, endereco, numero, cidade, uf);
+        if (!isCamposValidosLong(cpf)) {
+            JOptionPane.showMessageDialog(null, "O campo CPF tem que ser numérico", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+                
+        if (!isCamposValidosLong(telefone)) {
+            JOptionPane.showMessageDialog(null, "O campo TELEFONE tem que ser numérico", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+                
+        if (!isCamposValidosInt(numero)) {
+            JOptionPane.showMessageDialog(null, "O campo NUMERO tem que ser numérico", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        Cliente cliente = new Cliente(nome, Long.valueOf(cpf), Long.valueOf(telefone), endereco, Integer.valueOf(numero), cidade, uf);
         Boolean isCadastrado = this.clienteDAO.cadastrar(cliente);
         
         if (isCadastrado) {
@@ -290,12 +310,35 @@ public class TelaPrincipal extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLimparActionPerformed
 
     private void btnExcluirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcluirActionPerformed
+        int linhaSelecionada =  tabelaClientes.getSelectedRow();
         
+        if (linhaSelecionada >= 0) {
+
+            String nome = (String) tabelaClientes.getValueAt(linhaSelecionada, 0);
+
+            int resultado = JOptionPane.showConfirmDialog(this, "Deseja excluir o cliente '" + nome + "' ?", "Alerta",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            
+            if (resultado == JOptionPane.YES_OPTION) {
+                String cpfString = (String) tabelaClientes.getValueAt(linhaSelecionada, 1);
+                Long cpf = Long.valueOf(cpfString);
+                
+                this.clienteDAO.excluir(cpf);
+                modelo.removeRow(linhaSelecionada);
+                limparCampos();
+                
+                JOptionPane.showMessageDialog(null, "Cliente '" + nome + "' excluído.", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Nenhum cliente selecionado", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+        }
     }//GEN-LAST:event_btnExcluirActionPerformed
 
     private void tabelaClientesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelaClientesMouseClicked
         int linhaSelecionada =  tabelaClientes.getSelectedRow();
-        Long cpf = (Long) tabelaClientes.getValueAt(linhaSelecionada, 1);
+        String cpfString = (String) tabelaClientes.getValueAt(linhaSelecionada, 1);
+        Long cpf = Long.valueOf(cpfString);
         
         Cliente cliente = this.clienteDAO.consultar(cpf);
         
@@ -307,6 +350,53 @@ public class TelaPrincipal extends javax.swing.JFrame {
         txtCidade.setText(cliente.getCidade());        
         txtUf.setText(cliente.getEstado());
     }//GEN-LAST:event_tabelaClientesMouseClicked
+
+    private void btnAtualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAtualizarActionPerformed
+        int linhaSelecionada =  tabelaClientes.getSelectedRow();
+        
+        if (linhaSelecionada >= 0) {
+                String nomeUpdate = txtNome.getText();
+                String telefoneUpdate = txtTelefone.getText();
+                String enderecoUpdate = txtEndereco.getText();
+                String numeroUpdate = txtNumero.getText();
+                String cidadeUpdate = txtCidade.getText();
+                String ufUpdate = txtUf.getText();
+                
+                if (!isCamposValidos(nomeUpdate, telefoneUpdate, enderecoUpdate, numeroUpdate, cidadeUpdate, ufUpdate)) {
+                    JOptionPane.showMessageDialog(null, "Existem campos a serem preenchidos", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                
+                if (!isCamposValidosLong(telefoneUpdate)) {
+                    JOptionPane.showMessageDialog(null, "O campo TELEFONE tem que ser numérico", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                
+                if (!isCamposValidosInt(numeroUpdate)) {
+                    JOptionPane.showMessageDialog(null, "O campo NUMERO tem que ser numérico", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                
+                String cpfString = (String) tabelaClientes.getValueAt(linhaSelecionada, 1);
+                Long cpf = Long.valueOf(cpfString);
+                
+//                Object linhaAtualizada = {nomeUpdate, cpf, Long.valueOf(telefoneUpdate), enderecoUpdate, Integer.valueOf(numeroUpdate), cidadeUpdate, ufUpdate};
+
+                modelo.setValueAt(nomeUpdate, linhaSelecionada, 0);
+                modelo.setValueAt(telefoneUpdate, linhaSelecionada, 2);
+                modelo.setValueAt(enderecoUpdate, linhaSelecionada, 3);
+                modelo.setValueAt(numeroUpdate, linhaSelecionada, 4);
+                modelo.setValueAt(cidadeUpdate, linhaSelecionada, 5);
+                modelo.setValueAt(ufUpdate, linhaSelecionada, 6);
+                
+                Cliente clienteAlterado = new Cliente(nomeUpdate, cpf, Long.valueOf(telefoneUpdate), enderecoUpdate, Integer.valueOf(numeroUpdate), cidadeUpdate, ufUpdate);
+
+                this.clienteDAO.alterar(clienteAlterado);
+
+                limparCampos();                
+                JOptionPane.showMessageDialog(null, "Cliente '" + nomeUpdate + "' alterado.", "ATENÇÃO",JOptionPane.INFORMATION_MESSAGE);
+        }        
+    }//GEN-LAST:event_btnAtualizarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -377,7 +467,25 @@ public class TelaPrincipal extends javax.swing.JFrame {
         }
         return true;
     }
-
+    
+    public static boolean isCamposValidosLong(String value) {
+        try {
+            Long.valueOf(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
+    public static boolean isCamposValidosInt(String value) {
+        try {
+            Integer.valueOf(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
     private void initCustomComponents() {
         modelo.addColumn("Nome");
         modelo.addColumn("CPF");
